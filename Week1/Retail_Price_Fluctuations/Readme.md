@@ -81,5 +81,6 @@ Window functions significantly simplified time-series analysis and validation.
 
 ## Notebook
 See full workflow here:  
-`notebook/week1_retail_price_fluctuation_m5.ipynb`
+`Week1/Retail_Price_Fluctuations/Retail_Price_Fluctuations_Notebook.ipynb`
+
 
