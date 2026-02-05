@@ -43,14 +43,14 @@ Used to compare each week’s price with the previous week’s price without com
 ## Visual Insights
 
 ### Monthly Normalized Adjustments
-![Monthly Adjustments](images/monthly_adjustments_normalized.png)
+![Monthly Adjustments](images/download2.png)
 
 ### SKU Price Change Frequency
-![Distribution](images/sku_change_frequency.png)
+![Distribution](images/download1.png)
 
 ### Direction of Price Changes
-![Direction Donut](images/donut_direction.png)
-
+![Direction Donut](images/download.png)
+Week1/Retail_Price_Fluctuations/images/download.png
 ---
 
 ## Workflow Summary
@@ -82,3 +82,4 @@ Window functions significantly simplified time-series analysis and validation.
 ## Notebook
 See full workflow here:  
 `notebook/week1_retail_price_fluctuation_m5.ipynb`
+
