@@ -1,4 +1,3 @@
-[![GitHub stars](https://img.shields.io/github/stars/smritikaranjit/ride-surge-analysis?style=social)](https://github.com/Smriti-Karanjit/Data_to_Decision_Series)
 [![Surge Peak](https://img.shields.io/badge/Surge%20Peak-3.8%25-orange)](images/surge_by_hour.png)
 [![Rain Impact](https://img.shields.io/badge/Rain%20Lift-%2B0.1%25-gray)](images/surge_rain.png)
 # Ride-Share Surge Pricing Analysis  
