@@ -13,7 +13,7 @@ This project analyzes Uber & Lyft trip estimates merged with hourly weather reco
 ---
 
 ## In 1 Chart
-![Surge Probability by Hour](images/surge_by_hour.png)
+![Surge Probability by Hour](images/surge_hour.png)
 
 **Answer: Time > Weather.**  
 Surge peaks at **3.8% (Hour 14)** vs **3.0% baseline**.  
