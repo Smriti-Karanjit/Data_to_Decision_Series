@@ -1,1 +1,12 @@
-i
+# dbt artifacts
+target/
+dbt_packages/
+logs/
+
+# local warehouses
+*.duckdb
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
