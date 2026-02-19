@@ -1,12 +1,33 @@
 version: 2
 
 models:
+  - name: int_time_features
+    description: "Time features derived from hour_ts (month, seasonality, day-of-week, hour-of-day)."
+    columns:
+      - name: hour_ts
+        tests: [not_null, unique]
+
+  - name: int_demand_features
+    description: "Demand features derived from ERCOT MW (rolling stats, lag features, deltas)."
+    columns:
+      - name: hour_ts
+        tests: [not_null, unique]
+      - name: ercot_mw
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "ercot_mw > 0"
+
   - name: int_risk_thresholds_fixed
-    description: "Fixed percentile thresholds based on baseline window."
+    description: "Fixed percentile thresholds computed from baseline window for stable risk banding (p90/p95/p99)."
     columns:
       - name: p90
         tests: [not_null]
       - name: p95
         tests: [not_null]
       - name: p99
+        tests: [not_null]
+      - name: baseline_start
+        tests: [not_null]
+      - name: baseline_end
         tests: [not_null]
