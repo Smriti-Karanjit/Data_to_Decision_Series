@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: fct_capacity_risk
+    description: "Hourly demand with fixed percentile risk labels."
+    columns:
+      - name: hour_ts
+        tests: [not_null]
+      - name: risk_level
+        tests:
+          - accepted_values:
+              values: ['LOW','MEDIUM','HIGH','EXTREME']
+
+  - name: fct_capacity_alerts
+    description: "Monthly risk distribution with alert flags."
+    columns:
+      - name: month
+        tests: [not_null]
+      - name: alert_flag
+        tests:
+          - accepted_values:
+              values: [0,1]

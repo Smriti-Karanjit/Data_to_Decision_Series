@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: int_risk_thresholds_fixed
+    description: "Fixed percentile thresholds based on baseline window."
+    columns:
+      - name: p90
+        tests: [not_null]
+      - name: p95
+        tests: [not_null]
+      - name: p99
+        tests: [not_null]

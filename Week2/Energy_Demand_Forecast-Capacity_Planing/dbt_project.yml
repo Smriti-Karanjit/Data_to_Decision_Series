@@ -1,0 +1,21 @@
+name: ercot_demand_risk
+version: "1.0"
+config-version: 2
+
+profile: ercot_demand_risk
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+
+models:
+  ercot_demand_risk:
+    +schema: ercot
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: table
+    marts:
+      +materialized: table

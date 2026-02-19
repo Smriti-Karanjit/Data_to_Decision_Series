@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: stg_ercot_load_1h
+    description: "Hourly ERCOT electricity load cleaned and standardized."
+    columns:
+      - name: hour_ts
+        tests: [not_null]
+      - name: ercot_mw
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "ercot_mw > 0"
