@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: fct_capacity_risk
-    description: "Hourly ERCOT demand labeled into LOW/MEDIUM/HIGH/EXTREME using fixed baseline thresholds."
+    description: "Hourly ERCOT demand labeled into LOW/MEDIUM/HIGH/EXTREME risk bands using fixed baseline thresholds."
     columns:
       - name: hour_ts
         tests: [not_null, unique]
@@ -12,22 +12,11 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['LOW','MEDIUM','HIGH','EXTREME']
-
-  - name: fct_capacity_risk_monthly
-    description: "Monthly rollup of total hours, HIGH/EXTREME hours, and risk shares."
-    columns:
-      - name: month
-        tests: [not_null, unique]
-      - name: total_hours
-        tests: [not_null]
-      - name: high_hours
-        tests: [not_null]
-      - name: extreme_hours
-        tests: [not_null]
+              arguments:
+                values: ['LOW','MEDIUM','HIGH','EXTREME']
 
   - name: fct_capacity_alerts
-    description: "Monthly risk summary with alert flag and recommended operational action."
+    description: "Monthly risk summary with longest streaks, alert flag, and recommended operational action."
     columns:
       - name: month
         tests: [not_null, unique]
@@ -39,10 +28,11 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: [0, 1]
+              arguments:
+                values: [0, 1]
 
   - name: fct_capacity_scenarios
-    description: "Scenario simulation of projected HIGH/EXTREME hours under demand growth multipliers."
+    description: "Scenario simulation of projected HIGH/EXTREME hours under demand growth multipliers (2%, 5%, 8%)."
     columns:
       - name: month
         tests: [not_null]
@@ -50,14 +40,37 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
+              arguments:
+                values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
       - name: projected_extreme_hours
         tests: [not_null]
       - name: projected_high_hours
         tests: [not_null]
 
+  - name: fct_capacity_risk_enriched
+    description: "Hourly risk labels enriched with lag/rolling demand features for drilldown + anomaly context."
+    columns:
+      - name: hour_ts
+        tests: [not_null, unique]
+      - name: ercot_mw
+        tests: [not_null]
+      - name: risk_level
+        tests: [not_null]
+
+  - name: fct_capacity_risk_monthly
+    description: "Monthly rollup of total hours, HIGH/EXTREME hours, and risk shares."
+    columns:
+      - name: month
+        tests: [not_null, unique]
+
+  - name: mart_capacity_kpis
+    description: "Decision-ready monthly KPI table combining risk exposure, alerts, and scenario deltas."
+    columns:
+      - name: month
+        tests: [not_null, unique]
+
   - name: mart_capacity_readiness
-    description: "Final decision layer combining monthly risk exposure, alerts, and scenario deltas into readiness levels."
+    description: "Final decision layer: monthly capacity readiness KPIs combining risk exposure, alerts, and scenario deltas."
     columns:
       - name: month
         tests: [not_null, unique]
@@ -71,3 +84,45 @@ models:
         tests: [not_null]
       - name: delta_extreme_5pct
         tests: [not_null]
+        
+  - name: fct_capacity_risk
+    description: Canonical hourly fact table labeling ERCOT load into operational risk tiers.
+    columns:
+      - name: hour_ts
+        description: Hourly timestamp (1 row per hour). Primary key for the hourly fact.
+        tests:
+          - not_null
+          - unique
+      - name: ercot_mw
+        description: ERCOT system load in MW for the given hour. Must be positive.
+        tests:
+          - not_null
+      - name: risk_level
+        description: Discrete risk tier label for the hour (Low/Medium/High/Extreme) based on fixed thresholds.
+        tests:
+          - not_null
+
+  - name: mart_capacity_readiness
+    description: Final decision model producing monthly operational readiness based on risk exposure, alerts, and demand-growth scenarios.
+    columns:
+      - name: month
+        description: Calendar month (grain = 1 row per month). Primary key for readiness outputs.
+        tests:
+          - not_null
+          - unique
+      - name: readiness_level
+        description: Decision-ready readiness classification derived from exposure and alert rules (e.g., Stable/Elevated/Critical).
+        tests:
+          - not_null
+      - name: projected_extreme_hours
+        description: Extreme-risk hours under the selected growth scenario (e.g., +5%). Used to estimate future operational stress.
+      - name: delta_extreme_5pct
+        description: Change in extreme-risk hours between baseline and +5% growth scenario for the month.
+      - name: risk_level
+        description: Optional: if present at mart grain, indicates dominant risk tier classification for the month (if your model defines it).
+      - name: alert_flag
+        description: True if the month meets alert criteria based on high/extreme exposure rules.
+        tests:
+          - not_null
+
+

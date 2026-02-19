@@ -1,0 +1,13 @@
+version: 2
+
+exposures:
+  - name: capacity_readiness_dashboard
+    type: dashboard
+    maturity: high
+    description: "Ops-facing dashboard for monthly capacity readiness and risk outlook."
+    owner:
+      name: Operations Analytics
+      email: ops-analytics@example.com
+    depends_on:
+      - ref('mart_capacity_readiness')
+      - ref('mart_capacity_kpis')
