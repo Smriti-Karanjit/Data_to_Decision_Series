@@ -1,11 +1,9 @@
--- Fail if any growth scenario produces fewer alert hours than baseline.
--- Here "alert hours" means HIGH + EXTREME (or whatever your definition is).
+-- Fail if any growth scenario produces fewer (high+extreme) exposure hours than baseline for the same month.
 with baseline as (
   select
     month,
-    (projected_high_hours + projected_extreme_hours) as baseline_alert_hours
-  from {{ ref('fct_capacity_scenarios') }}
-  -- if you don't have a baseline scenario row, remove this block and compare vs actuals instead
+    (high_hours + extreme_hours) as baseline_alert_hours
+  from {{ ref('fct_capacity_risk_monthly') }}
 ),
 
 scenarios as (
