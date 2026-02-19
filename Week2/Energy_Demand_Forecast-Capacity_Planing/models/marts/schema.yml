@@ -69,4 +69,18 @@ models:
       - name: month
         tests: [not_null, unique]
 
+  - name: mart_capacity_readiness
+    description: "Final decision layer: monthly capacity readiness KPIs combining risk exposure, alerts, and scenario deltas."
+    columns:
+      - name: month
+        tests: [not_null, unique]
+      - name: readiness_level
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['GREEN','AMBER','RED']
+      - name: recommended_action
+        tests: [not_null]
+      - name: delta_extreme_5pct
+        tests: [not_null]
 
