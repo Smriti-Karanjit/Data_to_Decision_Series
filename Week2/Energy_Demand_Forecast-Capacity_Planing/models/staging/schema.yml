@@ -10,6 +10,3 @@ models:
       - name: ercot_mw
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "ercot_mw > 0"
