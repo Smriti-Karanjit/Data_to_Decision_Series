@@ -10,7 +10,8 @@ models:
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "ercot_mw > 0"
+              arguments:
+                expression: "ercot_mw > 0"
       - name: risk_level
         tests:
           - not_null
@@ -26,12 +27,14 @@ models:
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "extreme_hours >= 0"
+              arguments:
+                expression: "extreme_hours >= 0"
       - name: high_hours
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "high_hours >= 0"
+              arguments:
+                expression: "high_hours >= 0"
       - name: alert_flag
         tests:
           - not_null
@@ -52,9 +55,11 @@ models:
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "projected_extreme_hours >= 0"
+              arguments:
+                expression: "projected_extreme_hours >= 0"
       - name: projected_high_hours
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "projected_high_hours >= 0"
+              arguments:
+                expression: "projected_high_hours >= 0"

@@ -1,14 +1,6 @@
 version: 2
 
 models:
-  - name: stg_ercot_load
-    description: "Raw ERCOT load data cleaned and typed at source granularity."
-    columns:
-      - name: hour_ts
-        description: "Timestamp for the load observation (may contain duplicates due to DST)."
-        tests:
-          - not_null
-
   - name: stg_ercot_load_1h
     description: "Hourly ERCOT load (DST duplicates averaged) with one row per hour."
     columns:
