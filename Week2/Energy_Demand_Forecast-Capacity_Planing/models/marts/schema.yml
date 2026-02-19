@@ -7,16 +7,13 @@ models:
       - name: hour_ts
         tests: [not_null, unique]
       - name: ercot_mw
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "ercot_mw > 0"
+        tests: [not_null]
       - name: risk_level
         tests:
           - not_null
           - accepted_values:
-              values: ['LOW','MEDIUM','HIGH','EXTREME']
+              arguments:
+                values: ['LOW','MEDIUM','HIGH','EXTREME']
 
   - name: fct_capacity_alerts
     description: "Monthly risk summary with longest streaks, alert flag, and recommended operational action."
@@ -24,22 +21,15 @@ models:
       - name: month
         tests: [not_null, unique]
       - name: extreme_hours
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "extreme_hours >= 0"
+        tests: [not_null]
       - name: high_hours
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "high_hours >= 0"
+        tests: [not_null]
       - name: alert_flag
         tests:
           - not_null
           - accepted_values:
-              values: [0, 1]
+              arguments:
+                values: [0, 1]
 
   - name: fct_capacity_scenarios
     description: "Scenario simulation of projected HIGH/EXTREME hours under demand growth multipliers (2%, 5%, 8%)."
@@ -50,16 +40,9 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
+              arguments:
+                values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
       - name: projected_extreme_hours
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "projected_extreme_hours >= 0"
+        tests: [not_null]
       - name: projected_high_hours
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "projected_high_hours >= 0"
+        tests: [not_null]

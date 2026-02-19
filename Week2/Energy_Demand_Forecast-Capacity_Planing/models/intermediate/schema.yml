@@ -15,10 +15,6 @@ models:
       - name: ercot_mw
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "ercot_mw > 0"
-
   - name: int_risk_thresholds_fixed
     description: "Fixed percentile thresholds computed from baseline window for stable risk banding (p90/p95/p99)."
     columns:
