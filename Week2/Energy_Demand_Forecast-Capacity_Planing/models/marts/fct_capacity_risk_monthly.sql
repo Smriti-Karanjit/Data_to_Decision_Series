@@ -25,4 +25,4 @@ select
   round(high_hours * 1.0 / nullif(total_hours,0), 4) as pct_high,
   round(extreme_hours * 1.0 / nullif(total_hours,0), 4) as pct_extreme
 from agg
-order by month;
+order by month
