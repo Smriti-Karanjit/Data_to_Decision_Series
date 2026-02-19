@@ -2,127 +2,127 @@ version: 2
 
 models:
   - name: fct_capacity_risk
-    description: "Hourly ERCOT demand labeled into LOW/MEDIUM/HIGH/EXTREME risk bands using fixed baseline thresholds."
+    description: "Hourly ERCOT demand labeled into LOW/MEDIUM/HIGH/EXTREME using fixed baseline thresholds."
     columns:
       - name: hour_ts
-        tests: [not_null, unique]
+        description: "Hourly timestamp. Grain = 1 row per hour. Primary key for the hourly fact."
+        tests:
+          - not_null
+          - unique
+
       - name: ercot_mw
-        tests: [not_null]
+        description: "ERCOT system load (MW) for the given hour."
+        tests:
+          - not_null
+
       - name: risk_level
+        description: "Risk tier label derived from fixed MW thresholds: LOW, MEDIUM, HIGH, EXTREME."
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: ['LOW','MEDIUM','HIGH','EXTREME']
-
-  - name: fct_capacity_alerts
-    description: "Monthly risk summary with longest streaks, alert flag, and recommended operational action."
-    columns:
-      - name: month
-        tests: [not_null, unique]
-      - name: extreme_hours
-        tests: [not_null]
-      - name: high_hours
-        tests: [not_null]
-      - name: alert_flag
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: [0, 1]
-
-  - name: fct_capacity_scenarios
-    description: "Scenario simulation of projected HIGH/EXTREME hours under demand growth multipliers (2%, 5%, 8%)."
-    columns:
-      - name: month
-        tests: [not_null]
-      - name: scenario
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
-      - name: projected_extreme_hours
-        tests: [not_null]
-      - name: projected_high_hours
-        tests: [not_null]
-
-  - name: fct_capacity_risk_enriched
-    description: "Hourly risk labels enriched with lag/rolling demand features for drilldown + anomaly context."
-    columns:
-      - name: hour_ts
-        tests: [not_null, unique]
-      - name: ercot_mw
-        tests: [not_null]
-      - name: risk_level
-        tests: [not_null]
+              values: ["LOW", "MEDIUM", "HIGH", "EXTREME"]
 
   - name: fct_capacity_risk_monthly
-    description: "Monthly rollup of total hours, HIGH/EXTREME hours, and risk shares."
+    description: "Monthly rollup of total hours and exposure hours in HIGH/EXTREME tiers."
     columns:
       - name: month
-        tests: [not_null, unique]
+        description: "Calendar month. Grain = 1 row per month."
+        tests:
+          - not_null
+          - unique
 
-  - name: mart_capacity_kpis
-    description: "Decision-ready monthly KPI table combining risk exposure, alerts, and scenario deltas."
-    columns:
-      - name: month
-        tests: [not_null, unique]
+      - name: total_hours
+        description: "Total hourly observations in the month (should align to expected month hours after filtering)."
+        tests:
+          - not_null
 
-  - name: mart_capacity_readiness
-    description: "Final decision layer: monthly capacity readiness KPIs combining risk exposure, alerts, and scenario deltas."
+      - name: high_hours
+        description: "Count of hours labeled HIGH risk within the month."
+        tests:
+          - not_null
+
+      - name: extreme_hours
+        description: "Count of hours labeled EXTREME risk within the month."
+        tests:
+          - not_null
+
+  - name: fct_capacity_alerts
+    description: "Monthly risk summary including alert flag and recommended operational action."
     columns:
       - name: month
-        tests: [not_null, unique]
-      - name: readiness_level
+        description: "Calendar month. Grain = 1 row per month."
+        tests:
+          - not_null
+          - unique
+
+      - name: high_hours
+        description: "Monthly HIGH-risk exposure hours used for alerting logic."
+        tests:
+          - not_null
+
+      - name: extreme_hours
+        description: "Monthly EXTREME-risk exposure hours used for alerting logic."
+        tests:
+          - not_null
+
+      - name: alert_flag
+        description: "Binary alert indicator (1 = capacity stress conditions met for the month)."
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: ['GREEN','AMBER','RED']
-      - name: recommended_action
-        tests: [not_null]
-      - name: delta_extreme_5pct
-        tests: [not_null]
-        
-  - name: fct_capacity_risk
-    description: Canonical hourly fact table labeling ERCOT load into operational risk tiers.
-    columns:
-      - name: hour_ts
-        description: Hourly timestamp (1 row per hour). Primary key for the hourly fact.
-        tests:
-          - not_null
-          - unique
-      - name: ercot_mw
-        description: ERCOT system load in MW for the given hour. Must be positive.
-        tests:
-          - not_null
-      - name: risk_level
-        description: Discrete risk tier label for the hour (Low/Medium/High/Extreme) based on fixed thresholds.
-        tests:
-          - not_null
+              values: [0, 1]
 
-  - name: mart_capacity_readiness
-    description: Final decision model producing monthly operational readiness based on risk exposure, alerts, and demand-growth scenarios.
+  - name: fct_capacity_scenarios
+    description: "Scenario simulation of projected HIGH/EXTREME exposure hours under demand growth multipliers."
     columns:
       - name: month
-        description: Calendar month (grain = 1 row per month). Primary key for readiness outputs.
+        description: "Calendar month."
+        tests:
+          - not_null
+
+      - name: scenario
+        description: "Demand growth scenario applied to hourly load before re-tiering risk."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["GROWTH_2PCT", "GROWTH_5PCT", "GROWTH_8PCT"]
+
+      - name: projected_high_hours
+        description: "Projected HIGH-risk hours in the month under the scenario."
+        tests:
+          - not_null
+
+      - name: projected_extreme_hours
+        description: "Projected EXTREME-risk hours in the month under the scenario."
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: ["month", "scenario"]
+
+  - name: mart_capacity_readiness
+    description: "Final decision layer combining monthly exposure, alerts, and scenario deltas into operational readiness levels."
+    columns:
+      - name: month
+        description: "Calendar month. Grain = 1 row per month. Primary key for readiness outputs."
         tests:
           - not_null
           - unique
+
       - name: readiness_level
-        description: Decision-ready readiness classification derived from exposure and alert rules (e.g., Stable/Elevated/Critical).
+        description: "Operational readiness classification derived from exposure and alert logic: GREEN (normal), AMBER (heightened), RED (critical)."
         tests:
           - not_null
-      - name: projected_extreme_hours
-        description: Extreme-risk hours under the selected growth scenario (e.g., +5%). Used to estimate future operational stress.
+          - accepted_values:
+              values: ["GREEN", "AMBER", "RED"]
+
+      - name: recommended_action
+        description: "Human-readable recommended operational action aligned to readiness level (e.g., monitor, prepare reserves, activate contingency)."
+        tests:
+          - not_null
+
       - name: delta_extreme_5pct
-        description: Change in extreme-risk hours between baseline and +5% growth scenario for the month.
-      - name: risk_level
-        description: Optional: if present at mart grain, indicates dominant risk tier classification for the month (if your model defines it).
-      - name: alert_flag
-        description: True if the month meets alert criteria based on high/extreme exposure rules.
+        description: "Change in EXTREME exposure hours between baseline and GROWTH_5PCT scenario for the month."
         tests:
           - not_null
-
-
