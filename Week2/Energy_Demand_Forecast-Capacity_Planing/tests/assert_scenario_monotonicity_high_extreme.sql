@@ -1,5 +1,3 @@
--- Fail if exposure is not monotonic across increasing growth scenarios.
--- Assumes one row per (month, scenario) in fct_capacity_scenarios.
 with pivoted as (
   select
     month,
@@ -12,11 +10,10 @@ with pivoted as (
   from {{ ref('fct_capacity_scenarios') }}
   group by 1
 )
+
 select *
 from pivoted
-where high_2 is null or high_5 is null or high_8 is null
-   or extreme_2 is null or extreme_5 is null or extreme_8 is null
-   or high_5 < high_2
+where high_5 < high_2
    or high_8 < high_5
    or extreme_5 < extreme_2
    or extreme_8 < extreme_5

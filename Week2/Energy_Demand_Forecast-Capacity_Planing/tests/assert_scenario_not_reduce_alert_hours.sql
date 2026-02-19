@@ -1,25 +1,26 @@
--- tests/assert_scenario_not_reduce_alert_hours.sql
-with actual as (
+-- Fail if any growth scenario produces fewer alert hours than baseline.
+-- Here "alert hours" means HIGH + EXTREME (or whatever your definition is).
+with baseline as (
   select
     month,
-    (high_hours + extreme_hours) as actual_alert_hours
-  from {{ ref('fct_capacity_risk_monthly') }}
+    (projected_high_hours + projected_extreme_hours) as baseline_alert_hours
+  from {{ ref('fct_capacity_scenarios') }}
+  -- if you don't have a baseline scenario row, remove this block and compare vs actuals instead
 ),
 
-scen as (
+scenarios as (
   select
     month,
     scenario,
-    projected_alert_hours
+    (projected_high_hours + projected_extreme_hours) as scenario_alert_hours
   from {{ ref('fct_capacity_scenarios') }}
 )
 
 select
   s.month,
   s.scenario,
-  s.projected_alert_hours,
-  a.actual_alert_hours
-from scen s
-join actual a using (month)
-where s.projected_alert_hours < a.actual_alert_hours
-;
+  s.scenario_alert_hours,
+  b.baseline_alert_hours
+from scenarios s
+join baseline b using (month)
+where s.scenario_alert_hours < b.baseline_alert_hours

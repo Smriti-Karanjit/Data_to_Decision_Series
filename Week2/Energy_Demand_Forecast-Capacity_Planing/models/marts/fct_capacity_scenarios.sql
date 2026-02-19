@@ -1,4 +1,3 @@
-
 {{ config(materialized='table') }}
 
 with th as (
@@ -25,24 +24,13 @@ hourly_proj as (
     b.ercot_mw * s.mult as projected_mw
   from base b
   cross join scenarios s
-),
-
-agg as (
-  select
-    month,
-    scenario,
-    sum(case when projected_mw >= th.p99 then 1 else 0 end) as projected_extreme_hours,
-    sum(case when projected_mw >= th.p95 and projected_mw < th.p99 then 1 else 0 end) as projected_high_hours
-  from hourly_proj
-  cross join th
-  group by 1,2
 )
 
 select
   month,
   scenario,
-  projected_high_hours,
-  projected_extreme_hours,
-  (projected_high_hours + projected_extreme_hours) as projected_alert_hours
-from agg
-;
+  sum(case when projected_mw >= th.p99 then 1 else 0 end) as projected_extreme_hours,
+  sum(case when projected_mw >= th.p95 and projected_mw < th.p99 then 1 else 0 end) as projected_high_hours
+from hourly_proj
+cross join th
+group by 1,2
