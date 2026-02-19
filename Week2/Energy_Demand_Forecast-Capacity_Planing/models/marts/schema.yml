@@ -46,3 +46,20 @@ models:
         tests: [not_null]
       - name: projected_high_hours
         tests: [not_null]
+
+  - name: fct_capacity_risk_monthly
+    description: "Monthly rollup of HIGH/EXTREME hours and percent of month in risk."
+    columns:
+      - name: month
+        tests: [not_null, unique]
+      - name: total_hours
+        tests: [not_null]
+      - name: high_hours
+        tests: [not_null]
+      - name: extreme_hours
+        tests: [not_null]
+      - name: pct_high
+        tests: [not_null]
+      - name: pct_extreme
+        tests: [not_null]
+
