@@ -5,15 +5,15 @@ with base as (
     hour_ts,
     ercot_mw
   from {{ ref('stg_ercot_load_1h') }}
-  where hour_ts >= timestamp('2021-01-01')
-    and hour_ts <  timestamp('2024-01-01')  -- baseline: 2021-2023
+  where hour_ts >= timestamp '2021-01-01'
+    and hour_ts <  timestamp '2024-01-01'
 ),
 
 th as (
   select
-    percentile_approx(ercot_mw, 0.90) as p90,
-    percentile_approx(ercot_mw, 0.95) as p95,
-    percentile_approx(ercot_mw, 0.99) as p99
+    quantile_cont(ercot_mw, 0.90) as p90,
+    quantile_cont(ercot_mw, 0.95) as p95,
+    quantile_cont(ercot_mw, 0.99) as p99
   from base
 )
 

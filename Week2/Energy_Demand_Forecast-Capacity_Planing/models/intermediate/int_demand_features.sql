@@ -1,18 +1,21 @@
--- models/intermediate/int_demand_features.sql
+{{ config(materialized='table') }}
 
-CREATE OR REPLACE VIEW ercot.int_demand_features AS
-SELECT
+select
   l.hour_ts,
   l.ercot_mw,
-  t.year, t.month, t.day_of_week, t.hour_of_day, t.is_weekend,
+  t.year,
+  t.month,
+  t.day_of_week,
+  t.hour_of_day,
+  t.is_weekend,
 
-  LAG(l.ercot_mw, 1)   OVER (ORDER BY l.hour_ts) AS lag_1h,
-  LAG(l.ercot_mw, 24)  OVER (ORDER BY l.hour_ts) AS lag_24h,
-  LAG(l.ercot_mw, 168) OVER (ORDER BY l.hour_ts) AS lag_168h,
+  lag(l.ercot_mw, 1)   over (order by l.hour_ts) as lag_1h,
+  lag(l.ercot_mw, 24)  over (order by l.hour_ts) as lag_24h,
+  lag(l.ercot_mw, 168) over (order by l.hour_ts) as lag_168h,
 
-  AVG(l.ercot_mw) OVER (ORDER BY l.hour_ts ROWS BETWEEN 23 PRECEDING AND CURRENT ROW)  AS roll_mean_24h,
-  AVG(l.ercot_mw) OVER (ORDER BY l.hour_ts ROWS BETWEEN 167 PRECEDING AND CURRENT ROW) AS roll_mean_7d
+  avg(l.ercot_mw) over (order by l.hour_ts rows between 23 preceding and current row)  as roll_mean_24h,
+  avg(l.ercot_mw) over (order by l.hour_ts rows between 167 preceding and current row) as roll_mean_7d
 
-FROM ercot.stg_ercot_load_1h l
-JOIN ercot.int_time_features t
-  ON l.hour_ts = t.hour_ts;
+from {{ ref('stg_ercot_load_1h') }} l
+join {{ ref('int_time_features') }} t
+  on l.hour_ts = t.hour_ts

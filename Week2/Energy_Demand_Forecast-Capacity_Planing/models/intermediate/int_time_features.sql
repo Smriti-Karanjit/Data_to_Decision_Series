@@ -1,9 +1,10 @@
-CREATE OR REPLACE VIEW ercot.int_time_features AS
-SELECT
+{{ config(materialized='table') }}
+
+select
   hour_ts,
-  year(hour_ts)      AS year,
-  month(hour_ts)     AS month,
-  dayofweek(hour_ts) AS day_of_week,
-  hour(hour_ts)      AS hour_of_day,
-  CASE WHEN dayofweek(hour_ts) IN (1,7) THEN 1 ELSE 0 END AS is_weekend
-FROM ercot.stg_ercot_load_1h;
+  extract(year from hour_ts) as year,
+  extract(month from hour_ts) as month,
+  extract(dow from hour_ts) as day_of_week,   -- DuckDB: 0=Sunday ... 6=Saturday
+  extract(hour from hour_ts) as hour_of_day,
+  case when extract(dow from hour_ts) in (0, 6) then 1 else 0 end as is_weekend
+from {{ ref('stg_ercot_load_1h') }}
