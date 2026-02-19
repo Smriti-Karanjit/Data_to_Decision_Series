@@ -46,3 +46,27 @@ models:
         tests: [not_null]
       - name: projected_high_hours
         tests: [not_null]
+
+  - name: fct_capacity_risk_enriched
+    description: "Hourly risk labels enriched with lag/rolling demand features for drilldown + anomaly context."
+    columns:
+      - name: hour_ts
+        tests: [not_null, unique]
+      - name: ercot_mw
+        tests: [not_null]
+      - name: risk_level
+        tests: [not_null]
+
+  - name: fct_capacity_risk_monthly
+    description: "Monthly rollup of total hours, HIGH/EXTREME hours, and risk shares."
+    columns:
+      - name: month
+        tests: [not_null, unique]
+
+  - name: mart_capacity_kpis
+    description: "Decision-ready monthly KPI table combining risk exposure, alerts, and scenario deltas."
+    columns:
+      - name: month
+        tests: [not_null, unique]
+
+
