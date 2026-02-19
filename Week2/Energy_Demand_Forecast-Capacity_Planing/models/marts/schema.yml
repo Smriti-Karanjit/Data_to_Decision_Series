@@ -20,7 +20,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ["LOW", "MEDIUM", "HIGH", "EXTREME"]
+              arguments:
+                values: ["LOW", "MEDIUM", "HIGH", "EXTREME"]
 
   - name: fct_capacity_risk_monthly
     description: "Monthly rollup of total hours and exposure hours in HIGH/EXTREME tiers."
@@ -85,7 +86,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ["GROWTH_2PCT", "GROWTH_5PCT", "GROWTH_8PCT"]
+              arguments:
+                values: ["GROWTH_2PCT", "GROWTH_5PCT", "GROWTH_8PCT"]
 
       - name: projected_high_hours
         description: "Projected HIGH-risk hours in the month under the scenario."
@@ -115,7 +117,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ["GREEN", "AMBER", "RED"]
+              arguments:
+                values: ["GREEN", "AMBER", "RED"]
 
       - name: recommended_action
         description: "Human-readable recommended operational action aligned to readiness level (e.g., monitor, prepare reserves, activate contingency)."
