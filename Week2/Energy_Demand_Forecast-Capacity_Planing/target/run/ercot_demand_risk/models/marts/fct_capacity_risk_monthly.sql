@@ -11,9 +11,11 @@
 
 with base as (
   select
-    date_trunc('month', hour_ts) as month,
-    risk_level
-  from "ercot"."main_ercot"."fct_capacity_risk"
+    make_date(t.year::int, t.month::int, 1) as month,
+    r.risk_level
+  from "ercot"."main_ercot"."fct_capacity_risk" r
+  join "ercot"."main_ercot"."int_time_features" t
+    on r.hour_ts = t.hour_ts
 ),
 
 agg as (

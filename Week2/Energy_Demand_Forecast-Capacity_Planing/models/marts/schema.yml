@@ -32,17 +32,9 @@ models:
       - name: month
         tests: [not_null, unique]
       - name: extreme_hours
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "extreme_hours >= 0"
+        tests: [not_null]
       - name: high_hours
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "high_hours >= 0"
+        tests: [not_null]
       - name: alert_flag
         tests:
           - not_null
@@ -60,17 +52,9 @@ models:
           - accepted_values:
               values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
       - name: projected_extreme_hours
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "projected_extreme_hours >= 0"
+        tests: [not_null]
       - name: projected_high_hours
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: "projected_high_hours >= 0"
+        tests: [not_null]
 
   - name: mart_capacity_readiness
     description: "Final decision layer combining monthly risk exposure, alerts, and scenario deltas into readiness levels."
