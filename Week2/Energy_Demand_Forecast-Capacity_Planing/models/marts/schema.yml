@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: fct_capacity_risk
-    description: "Hourly ERCOT demand labeled into LOW/MEDIUM/HIGH/EXTREME risk bands using fixed baseline thresholds."
+    description: "Hourly ERCOT demand labeled into LOW/MEDIUM/HIGH/EXTREME using fixed baseline thresholds."
     columns:
       - name: hour_ts
         tests: [not_null, unique]
@@ -12,44 +12,10 @@ models:
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: ['LOW','MEDIUM','HIGH','EXTREME']
+              values: ['LOW','MEDIUM','HIGH','EXTREME']
 
-  - name: fct_capacity_alerts
-    description: "Monthly risk summary with longest streaks, alert flag, and recommended operational action."
-    columns:
-      - name: month
-        tests: [not_null, unique]
-      - name: extreme_hours
-        tests: [not_null]
-      - name: high_hours
-        tests: [not_null]
-      - name: alert_flag
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: [0, 1]
-
-  - name: fct_capacity_scenarios
-    description: "Scenario simulation of projected HIGH/EXTREME hours under demand growth multipliers (2%, 5%, 8%)."
-    columns:
-      - name: month
-        tests: [not_null]
-      - name: scenario
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
-      - name: projected_extreme_hours
-        tests: [not_null]
-      - name: projected_high_hours
-        tests: [not_null]
-
-<<<<<<< HEAD
   - name: fct_capacity_risk_monthly
-    description: "Monthly rollup of HIGH/EXTREME hours and percent of month in risk."
+    description: "Monthly rollup of total hours, HIGH/EXTREME hours, and risk shares."
     columns:
       - name: month
         tests: [not_null, unique]
@@ -59,34 +25,55 @@ models:
         tests: [not_null]
       - name: extreme_hours
         tests: [not_null]
-      - name: pct_high
-        tests: [not_null]
-      - name: pct_extreme
-=======
-  - name: fct_capacity_risk_enriched
-    description: "Hourly risk labels enriched with lag/rolling demand features for drilldown + anomaly context."
-    columns:
-      - name: hour_ts
-        tests: [not_null, unique]
-      - name: ercot_mw
-        tests: [not_null]
-      - name: risk_level
-        tests: [not_null]
 
-  - name: fct_capacity_risk_monthly
-    description: "Monthly rollup of total hours, HIGH/EXTREME hours, and risk shares."
+  - name: fct_capacity_alerts
+    description: "Monthly risk summary with alert flag and recommended operational action."
     columns:
       - name: month
         tests: [not_null, unique]
+      - name: extreme_hours
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "extreme_hours >= 0"
+      - name: high_hours
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "high_hours >= 0"
+      - name: alert_flag
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
 
-  - name: mart_capacity_kpis
-    description: "Decision-ready monthly KPI table combining risk exposure, alerts, and scenario deltas."
+  - name: fct_capacity_scenarios
+    description: "Scenario simulation of projected HIGH/EXTREME hours under demand growth multipliers."
     columns:
       - name: month
-        tests: [not_null, unique]
+        tests: [not_null]
+      - name: scenario
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
+      - name: projected_extreme_hours
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "projected_extreme_hours >= 0"
+      - name: projected_high_hours
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "projected_high_hours >= 0"
 
   - name: mart_capacity_readiness
-    description: "Final decision layer: monthly capacity readiness KPIs combining risk exposure, alerts, and scenario deltas."
+    description: "Final decision layer combining monthly risk exposure, alerts, and scenario deltas into readiness levels."
     columns:
       - name: month
         tests: [not_null, unique]
@@ -98,6 +85,4 @@ models:
       - name: recommended_action
         tests: [not_null]
       - name: delta_extreme_5pct
->>>>>>> 89bb48b6f6f52a8c51ecc6295b524f5627c075a8
         tests: [not_null]
-
