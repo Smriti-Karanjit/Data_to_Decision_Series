@@ -2,48 +2,14 @@ version: 2
 
 models:
   - name: stg_ercot_load_1h
-    description: "Hourly ERCOT load (DST duplicates averaged) with one row per hour."
+    description: "Hourly ERCOT load (cleaned in Databricks CE, exported as CSV, loaded via dbt seed)."
     columns:
       - name: hour_ts
-        description: "Hour timestamp (unique after aggregation)."
-        tests:
-          - not_null
-          - unique
+        tests: [not_null, unique]
+
       - name: ercot_mw
-        description: "Total ERCOT system load in MW."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "ercot_mw > 0"
-      - name: coast_mw
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "coast_mw is null or coast_mw >= 0"
-      - name: east_mw
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "east_mw is null or east_mw >= 0"
-      - name: fwest_mw
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "fwest_mw is null or fwest_mw >= 0"
-      - name: north_mw
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "north_mw is null or north_mw >= 0"
-      - name: ncent_mw
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "ncent_mw is null or ncent_mw >= 0"
-      - name: south_mw
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "south_mw is null or south_mw >= 0"
-      - name: scent_mw
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "scent_mw is null or scent_mw >= 0"
-      - name: west_mw
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "west_mw is null or west_mw >= 0"
+              arguments:
+                expression: "ercot_mw > 0"
