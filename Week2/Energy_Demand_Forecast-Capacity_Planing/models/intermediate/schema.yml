@@ -2,29 +2,76 @@ version: 2
 
 models:
   - name: int_time_features
-    description: "Time features derived from hour_ts (month, seasonality, day-of-week, hour-of-day)."
+    description: "Time features derived from hour_ts (year, month, day-of-week, hour-of-day, weekend flag)."
     columns:
       - name: hour_ts
-        tests: [not_null, unique]
-
-  - name: int_demand_features
-    description: "Demand features derived from ERCOT MW (rolling stats, lag features, deltas)."
-    columns:
-      - name: hour_ts
-        tests: [not_null, unique]
-      - name: ercot_mw
+        description: "Hourly timestamp."
         tests:
           - not_null
+          - unique
+
+      - name: year
+        description: "Calendar year."
+        tests: [not_null]
+
+      - name: month
+        description: "Calendar month (1–12)."
+        tests: [not_null]
+
+      - name: day_of_week
+        description: "Day of week (DuckDB: 0=Sunday ... 6=Saturday)."
+        tests: [not_null]
+
+      - name: hour_of_day
+        description: "Hour of day (0–23)."
+        tests: [not_null]
+
+      - name: is_weekend
+        description: "1 if Saturday/Sunday else 0."
+        tests: [not_null]
+
+  - name: int_demand_features
+    description: "Demand features built from ERCOT MW with time joins: lags and rolling means."
+    columns:
+      - name: hour_ts
+        description: "Hourly timestamp."
+        tests:
+          - not_null
+          - unique
+
+      - name: ercot_mw
+        description: "System ERCOT load (MW)."
+        tests: [not_null]
+
+      - name: lag_1h
+        description: "Load lagged by 1 hour."
+      - name: lag_24h
+        description: "Load lagged by 24 hours."
+      - name: lag_168h
+        description: "Load lagged by 168 hours (7 days)."
+      - name: roll_mean_24h
+        description: "Rolling mean over last 24 hours."
+      - name: roll_mean_7d
+        description: "Rolling mean over last 7 days."
+
   - name: int_risk_thresholds_fixed
-    description: "Fixed percentile thresholds computed from baseline window for stable risk banding (p90/p95/p99)."
+    description: "One-row table containing fixed percentile thresholds (p90/p95/p99) computed from a baseline window for stable risk banding."
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "p90 <= p95 and p95 <= p99"
     columns:
       - name: p90
+        description: "90th percentile of baseline ERCOT MW."
         tests: [not_null]
       - name: p95
+        description: "95th percentile of baseline ERCOT MW."
         tests: [not_null]
       - name: p99
+        description: "99th percentile of baseline ERCOT MW."
         tests: [not_null]
       - name: baseline_start
+        description: "Inclusive baseline start timestamp."
         tests: [not_null]
       - name: baseline_end
+        description: "Exclusive baseline end timestamp."
         tests: [not_null]
