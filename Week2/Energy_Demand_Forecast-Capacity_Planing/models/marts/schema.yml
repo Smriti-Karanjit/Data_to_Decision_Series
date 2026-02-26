@@ -1,224 +1,132 @@
 version: 2
 
 models:
-  - name: fct_capacity_risk
-    description: "Hourly ERCOT demand labeled into LOW/MEDIUM/HIGH/EXTREME using fixed baseline thresholds."
-    columns:
-      - name: hour_ts
-        description: "Hourly timestamp. Grain = 1 row per hour. Primary key for hourly fact."
-        tests:
-          - not_null
-          - unique
 
-      - name: ercot_mw
-        description: "ERCOT system load (MW) for the given hour."
-        tests:
-          - not_null
-
-      - name: risk_level
-        description: "Risk tier label derived from fixed MW thresholds: LOW, MEDIUM, HIGH, EXTREME."
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ["LOW", "MEDIUM", "HIGH", "EXTREME"]
-
+  # =========================
+  # FACT: Monthly Risk
+  # =========================
   - name: fct_capacity_risk_monthly
-    description: "Monthly rollup of total hours and exposure hours in HIGH/EXTREME tiers."
+    description: "Monthly aggregation of ERCOT hourly risk classification."
     columns:
       - name: month
-        description: "Calendar month start timestamp. Grain = 1 row per month."
         tests:
           - not_null
           - unique
 
       - name: total_hours
-        description: "Total hourly observations in the month."
         tests:
           - not_null
 
       - name: high_hours
-        description: "Count of hours labeled HIGH risk within the month."
         tests:
           - not_null
 
       - name: extreme_hours
-        description: "Count of hours labeled EXTREME risk within the month."
         tests:
           - not_null
 
       - name: pct_high
-        description: "Share of month hours labeled HIGH (high_hours / total_hours)."
         tests:
           - not_null
 
       - name: pct_extreme
-        description: "Share of month hours labeled EXTREME (extreme_hours / total_hours)."
         tests:
           - not_null
 
+
+  # =========================
+  # FACT: Alerts
+  # =========================
   - name: fct_capacity_alerts
-    description: "Monthly risk summary including alert flag and recommended operational action."
+    description: "Operational alert flags based on monthly extreme/high thresholds and streak logic."
     columns:
       - name: month
-        description: "Calendar month start timestamp. Grain = 1 row per month."
         tests:
           - not_null
           - unique
 
-      - name: high_hours
-        description: "Monthly HIGH-risk exposure hours used for alerting logic."
-        tests:
-          - not_null
-
-      - name: extreme_hours
-        description: "Monthly EXTREME-risk exposure hours used for alerting logic."
-        tests:
-          - not_null
-
       - name: alert_flag
-        description: "Binary alert indicator (1 = capacity stress conditions met for the month)."
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: [0, 1]
+              values: [0, 1]
 
-      - name: recommended_action
-        description: "Operational recommendation derived from alert_flag and exposure tiers."
+      - name: extreme_hours
         tests:
           - not_null
 
+      - name: high_hours
+        tests:
+          - not_null
+
+
+  # =========================
+  # FACT: Scenarios
+  # =========================
   - name: fct_capacity_scenarios
-    description: "Scenario simulation of projected HIGH/EXTREME exposure hours under demand growth multipliers."
+    description: "Projected monthly extreme/high hours under demand growth scenarios."
     columns:
       - name: month
-        description: "Calendar month start timestamp."
         tests:
           - not_null
 
       - name: scenario
-        description: "Demand growth scenario applied to hourly load before re-tiering risk."
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: ["GROWTH_2PCT", "GROWTH_5PCT", "GROWTH_8PCT"]
+              values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
 
-      - name: projected_high_hours
-        description: "Projected HIGH-risk hours in the month under the scenario."
+      - name: projected_extreme_hours
         tests:
           - not_null
 
-      - name: projected_extreme_hours
-        description: "Projected EXTREME-risk hours in the month under the scenario."
+      - name: projected_high_hours
         tests:
           - not_null
 
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
-            combination_of_columns: ["month", "scenario"]
+            combination_of_columns: ['month', 'scenario']
 
-  - name: fct_capacity_risk_enriched
-    description: "Hourly risk fact enriched with time/demand features for downstream modeling & slicing."
+
+  # =========================
+  # MART: KPIs
+  # =========================
+  - name: mart_capacity_kpis
+    description: "Decision-ready monthly KPIs combining risk, alerts, and growth projections."
     columns:
-      - name: hour_ts
-        description: "Hourly timestamp. Grain = 1 row per hour."
+      - name: month
         tests:
           - not_null
           - unique
 
-      - name: ercot_mw
-        description: "ERCOT system load (MW)."
+      - name: alert_flag
         tests:
           - not_null
 
-      - name: risk_level
-        description: "Risk tier label."
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ["LOW", "MEDIUM", "HIGH", "EXTREME"]
-
-      - name: year
-        description: "Year extracted from hour_ts."
+      - name: delta_extreme_5pct
         tests:
           - not_null
 
-      - name: month
-        description: "Month number extracted from hour_ts."
-        tests:
-          - not_null
 
-      - name: day_of_week
-        description: "Day of week extracted from hour_ts (DuckDB dayofweek convention)."
-        tests:
-          - not_null
-
-      - name: hour_of_day
-        description: "Hour of day extracted from hour_ts (0-23)."
-        tests:
-          - not_null
-
-      - name: is_weekend
-        description: "Weekend flag derived from day_of_week."
-        tests:
-          - not_null
-
-      - name: lag_1h
-        description: "ERCOT MW lagged by 1 hour."
-        tests: []
-
-      - name: lag_24h
-        description: "ERCOT MW lagged by 24 hours."
-        tests: []
-
-      - name: lag_168h
-        description: "ERCOT MW lagged by 168 hours (7 days)."
-        tests: []
-
-      - name: roll_mean_24h
-        description: "Rolling mean ERCOT MW over the past 24 hours."
-        tests: []
-
-      - name: roll_mean_7d
-        description: "Rolling mean ERCOT MW over the past 7 days."
-        tests: []
-
+  # =========================
+  # MART: Readiness
+  # =========================
   - name: mart_capacity_readiness
-    description: "Final decision layer combining monthly exposure, alerts, and scenario deltas into operational readiness levels."
+    description: "Capacity readiness classification (GREEN/AMBER/RED) with recommended actions."
     columns:
       - name: month
-        description: "Calendar month start timestamp. Grain = 1 row per month. Primary key for readiness outputs."
         tests:
           - not_null
           - unique
 
       - name: readiness_level
-        description: "Operational readiness classification: GREEN (normal), AMBER (heightened), RED (critical)."
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: ["GREEN", "AMBER", "RED"]
+              values: ['GREEN','AMBER','RED']
 
       - name: recommended_action
-        description: "Recommended operational action aligned to readiness level."
         tests:
           - not_null
-
-      - name: delta_extreme_5pct
-        description: "Change in EXTREME exposure hours between baseline and GROWTH_5PCT for the month."
-        tests:
-          - not_null
-
-  - name: mart_capacity_kpis
-    description: "High-level KPIs for capacity risk monitoring (summary table for dashboards)."
-    columns:
-      - name: month
-        description: "Calendar month start timestamp. Grain = 1 row per month."
-        tests:
-          - not_null
-          - unique

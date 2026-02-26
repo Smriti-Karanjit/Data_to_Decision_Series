@@ -2,11 +2,9 @@
 
 with base as (
   select
-    make_date(t.year::int, t.month::int, 1) as month,
-    r.risk_level
-  from {{ ref('fct_capacity_risk') }} r
-  join {{ ref('int_time_features') }} t
-    on r.hour_ts = t.hour_ts
+    date_trunc('month', hour_ts) as month,
+    risk_level
+  from {{ ref('fct_capacity_risk') }}
 ),
 
 agg as (

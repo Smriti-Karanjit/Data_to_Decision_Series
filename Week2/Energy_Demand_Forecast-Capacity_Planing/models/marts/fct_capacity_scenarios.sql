@@ -30,7 +30,8 @@ select
   month,
   scenario,
   sum(case when projected_mw >= th.p99 then 1 else 0 end) as projected_extreme_hours,
-  sum(case when projected_mw >= th.p95 and projected_mw < th.p99 then 1 else 0 end) as projected_high_hours
+  sum(case when projected_mw >= th.p95 and projected_mw < th.p99 then 1 else 0 end) as projected_high_hours,
+  sum(case when projected_mw >= th.p95 then 1 else 0 end) as projected_high_plus_hours
 from hourly_proj
 cross join th
 group by 1,2

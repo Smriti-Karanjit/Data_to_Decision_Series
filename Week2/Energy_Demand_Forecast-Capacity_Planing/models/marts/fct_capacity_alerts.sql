@@ -1,22 +1,24 @@
 {{ config(materialized='table') }}
 
-with hourly as (
+with params as (
+  select
+    250::int as extreme_hours_threshold,
+    12::int  as extreme_streak_threshold,
+    400::int as high_hours_threshold,
+    24::int  as high_plus_streak_threshold
+),
+
+hourly as (
   select
     hour_ts,
     date_trunc('month', hour_ts) as month,
-    risk_level
+    risk_level,
+    case when risk_level in ('HIGH','EXTREME') then 1 else 0 end as is_high_plus,
+    case when risk_level = 'EXTREME' then 1 else 0 end as is_extreme
   from {{ ref('fct_capacity_risk') }}
 ),
 
-flagged as (
-  select
-    *,
-    case when risk_level in ('HIGH','EXTREME') then 1 else 0 end as is_high_plus,
-    case when risk_level = 'EXTREME' then 1 else 0 end as is_extreme
-  from hourly
-),
-
--- gaps-and-islands: create group ids separated by "not in band"
+-- group ids separated by "not in band"
 streaks as (
   select
     *,
@@ -24,7 +26,21 @@ streaks as (
       over (partition by month order by hour_ts) as grp_high_plus,
     sum(case when is_extreme = 0 then 1 else 0 end)
       over (partition by month order by hour_ts) as grp_extreme
-  from flagged
+  from hourly
+),
+
+-- compute true streak length (count only the band hours)
+streak_counts as (
+  select
+    month,
+    hour_ts,
+    risk_level,
+    is_high_plus,
+    is_extreme,
+
+    sum(is_high_plus) over (partition by month, grp_high_plus) as high_plus_streak_len,
+    sum(is_extreme)   over (partition by month, grp_extreme)   as extreme_streak_len
+  from streaks
 ),
 
 stats as (
@@ -36,31 +52,35 @@ stats as (
     sum(case when risk_level='MEDIUM' then 1 else 0 end) as medium_hours,
     sum(case when risk_level='LOW' then 1 else 0 end) as low_hours,
 
-    max(case when is_high_plus=1 then cnt_high_plus else 0 end) as max_high_plus_streak,
-    max(case when is_extreme=1 then cnt_extreme else 0 end) as max_extreme_streak
+    max(case when is_high_plus=1 then high_plus_streak_len else 0 end) as max_high_plus_streak,
+    max(case when is_extreme=1 then extreme_streak_len else 0 end) as max_extreme_streak
 
-  from (
-    select
-      month, risk_level, is_high_plus, is_extreme,
-      count(*) over (partition by month, grp_high_plus) as cnt_high_plus,
-      count(*) over (partition by month, grp_extreme) as cnt_extreme
-    from streaks
-  ) x
+  from streak_counts
   group by 1
 )
 
 select
-  *,
-  -- explainable “ops rule” (tune later)
+  s.*,
+
   case
-    when extreme_hours >= 250 or max_extreme_streak >= 12 then 1
-    when high_hours >= 400 or max_high_plus_streak >= 24 then 1
+    when s.extreme_hours >= p.extreme_hours_threshold
+      or s.max_extreme_streak >= p.extreme_streak_threshold
+      then 1
+    when s.high_hours >= p.high_hours_threshold
+      or s.max_high_plus_streak >= p.high_plus_streak_threshold
+      then 1
     else 0
   end as alert_flag,
 
   case
-    when extreme_hours >= 250 or max_extreme_streak >= 12 then 'PREP EXTRA CAPACITY / OPERATIONS'
-    when high_hours >= 400 or max_high_plus_streak >= 24 then 'INCREASE READINESS / STAFFING'
+    when s.extreme_hours >= p.extreme_hours_threshold
+      or s.max_extreme_streak >= p.extreme_streak_threshold
+      then 'PREP EXTRA CAPACITY / OPERATIONS'
+    when s.high_hours >= p.high_hours_threshold
+      or s.max_high_plus_streak >= p.high_plus_streak_threshold
+      then 'INCREASE READINESS / STAFFING'
     else 'NORMAL'
   end as recommended_action
-from stats
+
+from stats s
+cross join params p
