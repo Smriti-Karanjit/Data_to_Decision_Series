@@ -2,11 +2,43 @@ version: 2
 
 models:
   - name: stg_ercot_load_1h
-    description: "Hourly ERCOT load (cleaned in Databricks CE, exported as CSV, loaded via dbt seed)."
+    description: >
+      Hourly ERCOT system load exported from Databricks Community Edition,
+      normalized to one row per hour, and cast to numeric MW values.
+      This is the canonical hourly load source for downstream risk modeling.
+
     columns:
       - name: hour_ts
-        tests: [not_null, unique]
-
-      - name: ercot_mw
+        description: "Hourly timestamp."
         tests:
           - not_null
+          - unique
+
+      - name: ercot_mw
+        description: "System-wide ERCOT load in MW."
+        tests:
+          - not_null
+
+      - name: coast_mw
+        description: "Coast zone load in MW."
+
+      - name: east_mw
+        description: "East zone load in MW."
+
+      - name: fwest_mw
+        description: "Far West zone load in MW."
+
+      - name: north_mw
+        description: "North zone load in MW."
+
+      - name: ncent_mw
+        description: "North Central zone load in MW."
+
+      - name: south_mw
+        description: "South zone load in MW."
+
+      - name: scent_mw
+        description: "South Central zone load in MW."
+
+      - name: west_mw
+        description: "West zone load in MW."
