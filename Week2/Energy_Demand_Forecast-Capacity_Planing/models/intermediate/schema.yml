@@ -58,7 +58,8 @@ models:
     description: "One-row table containing fixed percentile thresholds (p90/p95/p99) computed from a baseline window for stable risk banding."
     tests:
       - dbt_utils.expression_is_true:
-          expression: "p90 <= p95 and p95 <= p99"
+          arguments:
+            expression: "p90 <= p95 and p95 <= p99"
     columns:
       - name: p90
         description: "90th percentile of baseline ERCOT MW."
