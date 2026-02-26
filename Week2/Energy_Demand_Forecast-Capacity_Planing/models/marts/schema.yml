@@ -49,7 +49,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: [0, 1]
+              arguments:
+                values: [0, 1]
 
       - name: extreme_hours
         tests:
@@ -74,7 +75,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
+              arguments:
+                values: ['GROWTH_2PCT','GROWTH_5PCT','GROWTH_8PCT']
 
       - name: projected_extreme_hours
         tests:
@@ -125,7 +127,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['GREEN','AMBER','RED']
+              arguments:
+                values: ['GREEN','AMBER','RED']
 
       - name: recommended_action
         tests:
